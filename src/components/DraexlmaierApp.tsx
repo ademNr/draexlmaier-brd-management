@@ -1014,7 +1014,7 @@ const DraexlmaierApp = () => {
                         <div className="text-xl font-bold mb-5" style={{ color: COLORS.primary }}>
                             {t.analytics.referenceImages}
                         </div>
-                        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+                        <div className="grid grid-cols-2 gap-1 w-fit mx-auto">
                             {[1, 2, 3, 4, 5, 6].map(num => {
                                 const partierName = `Partier ${num}`;
                                 const defautsCount = getPartierDefautsCount(partierName);
@@ -1022,7 +1022,7 @@ const DraexlmaierApp = () => {
                                 const hasAlert = defautsCount > 10 && !isResolved;
 
                                 return (
-                                    <div key={num} className="border-2 rounded-lg overflow-hidden" style={{
+                                    <div key={num} className="border-2 rounded-lg overflow-hidden w-fit" style={{
                                         borderColor: hasAlert ? COLORS.danger : COLORS.lightBg,
                                         borderWidth: hasAlert ? '4px' : '2px'
                                     }}>
@@ -1032,9 +1032,11 @@ const DraexlmaierApp = () => {
                                                     src={dashboardImages[`img${num}`] as string}
                                                     alt={`Partier ${num}`}
                                                     style={{
-                                                        width: '100%',
-                                                        height: '100px',
-                                                        objectFit: 'cover'
+                                                        width: 'auto',
+                                                        height: '120px',
+                                                        maxWidth: '100%',
+                                                        objectFit: 'contain',
+                                                        backgroundColor: '#f8f9fa'
                                                     }}
                                                 />
                                                 <div
@@ -1061,7 +1063,7 @@ const DraexlmaierApp = () => {
                                                 </div>
                                             </div>
                                         ) : (
-                                            <div className="p-4 text-center" style={{ height: '100px', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+                                            <div className="p-4 text-center" style={{ height: '120px', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
                                                 <input
                                                     type="file"
                                                     accept="image/*"
