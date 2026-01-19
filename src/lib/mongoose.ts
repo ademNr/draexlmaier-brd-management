@@ -7,7 +7,7 @@ declare global {
 const MONGODB_URI = process.env.MONGODB_URI;
 
 if (!MONGODB_URI) {
-    throw new Error("La variable d'environnement MONGODB_URI est manquante.");
+    console.warn("La variable d'environnement MONGODB_URI est manquante.");
 }
 
 export async function connectToDatabase() {
@@ -21,11 +21,11 @@ export async function connectToDatabase() {
 
     if (!global._mongooseConn.promise) {
         mongoose.set("strictQuery", true);
-    global._mongooseConn.promise = mongoose
-      .connect(MONGODB_URI as string, {
-        bufferCommands: false,
-      })
-      .then((connection) => connection);
+        global._mongooseConn.promise = mongoose
+            .connect(MONGODB_URI as string, {
+                bufferCommands: false,
+            })
+            .then((connection) => connection);
     }
 
     global._mongooseConn.conn = await global._mongooseConn.promise;
