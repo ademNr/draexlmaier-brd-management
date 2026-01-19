@@ -28,9 +28,7 @@ const COLORS = {
 
 const CHART_COLORS = ['#003d7a', '#0066cc', '#00a3e0', '#00b050', '#ffc000', '#c00000'];
 
-const USERS = [
-    { username: 'yahya mzali', password: 'drax123' }
-];
+
 
 
 
@@ -177,16 +175,34 @@ const DraexlmaierApp = () => {
             }
         };
 
+        const loadControls = async () => {
+            try {
+                const res = await fetch('/api/controls');
+                const data = await res.json();
+                if (!res.ok) throw new Error(data.error || 'Failed to fetch');
+
+                // If data is array (even empty), use it
+                if (Array.isArray(data)) {
+                    setControlData(data);
+                }
+            } catch (error) {
+                console.error('Error loading controls:', error);
+            }
+        };
+
         loadSettings();
         loadImage();
         loadDashboardImages();
         loadPartierResolved();
+        loadControls(); // Fetch from DB on mount
 
         const refreshInterval = setInterval(() => {
             loadImage();
             loadDashboardImages();
             loadPartierResolved();
-        }, 1000);
+            // Optional: Uncomment to poll for updates
+            // loadControls(); 
+        }, 5000); // Polling every 5s instead of 1s for better performance
 
         return () => clearInterval(refreshInterval);
     }, []);
@@ -201,9 +217,7 @@ const DraexlmaierApp = () => {
     };
 
     const handleLogin = () => {
-        const foundUser = USERS.find(u => u.username.toLowerCase() === username.trim().toLowerCase());
-
-        if (foundUser && foundUser.password === password && shift) {
+        if (username.trim() && password === 'drax123' && shift) {
             setIsLoggedIn(true);
             setCurrentPage('control');
             setLoginError('');
@@ -252,22 +266,37 @@ const DraexlmaierApp = () => {
             return;
         }
 
+        // Optimistic UI update
         const newControl = {
-            id: Date.now(),
+            id: Date.now(), // Temporary ID for React key
             date: new Date().toLocaleString('fr-FR'),
             shift,
             username,
             nmKsk: formData.nmKsk,
             nmBbrd: formData.nmBbrd,
             commentaire: formData.commentaire,
-            selectedImage: formData.selectedImage,
-            imageFile: formData.imageFile,
+            selectedImage: formData.selectedImage, // Kept locally in state/memory
+            imageFile: formData.imageFile,         // Kept locally in state/memory
             partierDefauts: formData.partierDefauts,
             totalDefauts: Object.values(formData.partierDefauts)
                 .reduce((acc, arr) => acc + arr.length, 0)
         };
 
-        setControlData(prev => [...prev, newControl]);
+        setControlData(prev => [newControl, ...prev]);
+
+        // Save to DB (without image)
+        try {
+            fetch('/api/controls', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(newControl)
+            }).then(res => {
+                if (!res.ok) console.error('Failed to save to DB');
+            });
+        } catch (e) {
+            console.error('Error saving control:', e);
+        }
+
         alert(t.control.alerts.saved);
         resetForm();
     };
