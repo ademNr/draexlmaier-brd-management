@@ -91,6 +91,8 @@ const DraexlmaierApp = () => {
         'Partier 5': false,
         'Partier 6': false
     });
+    const [formAcknowledgedCounts, setFormAcknowledgedCounts] = useState<Record<string, number>>({});
+    const [dashboardAcknowledgedCounts, setDashboardAcknowledgedCounts] = useState<Record<string, number>>({});
 
     const [formData, setFormData] = useState<FormDataState>({
         nmKsk: '',
@@ -175,6 +177,18 @@ const DraexlmaierApp = () => {
             }
         };
 
+        const loadAcknowledgedCounts = async () => {
+            try {
+                const formAck = await storage.get('draexlmaier_form_ack', true);
+                if (formAck && formAck.value) setFormAcknowledgedCounts(JSON.parse(formAck.value));
+
+                const dashAck = await storage.get('draexlmaier_dashboard_ack', true);
+                if (dashAck && dashAck.value) setDashboardAcknowledgedCounts(JSON.parse(dashAck.value));
+            } catch (error) {
+                console.log('No acknowledged counts found');
+            }
+        };
+
         const loadControls = async () => {
             try {
                 const res = await fetch('/api/controls');
@@ -200,6 +214,7 @@ const DraexlmaierApp = () => {
             loadImage();
             loadDashboardImages();
             loadPartierResolved();
+            loadAcknowledgedCounts();
             // Optional: Uncomment to poll for updates
             // loadControls(); 
         }, 5000); // Polling every 5s instead of 1s for better performance
@@ -239,15 +254,26 @@ const DraexlmaierApp = () => {
     };
 
     const toggleDefaut = (partier: string, defaut: string) => {
-        setFormData(prev => ({
-            ...prev,
-            partierDefauts: {
-                ...prev.partierDefauts,
-                [partier]: prev.partierDefauts[partier].includes(defaut)
-                    ? prev.partierDefauts[partier].filter(d => d !== defaut)
-                    : [...prev.partierDefauts[partier], defaut]
+        setFormData(prev => {
+            const currentDefects = prev.partierDefauts[partier] || [];
+            const exists = currentDefects.includes(defaut);
+
+            let newDefects;
+            if (exists) {
+                newDefects = currentDefects.filter(d => d !== defaut);
+            } else {
+                // Max 6 defects total constraint check if needed, but for now just toggle
+                newDefects = [...currentDefects, defaut];
             }
-        }));
+
+            return {
+                ...prev,
+                partierDefauts: {
+                    ...prev.partierDefauts,
+                    [partier]: newDefects
+                }
+            };
+        });
     };
 
     const saveControl = () => {
@@ -317,6 +343,11 @@ const DraexlmaierApp = () => {
                 'Partier 6': []
             }
         });
+        setFormAcknowledgedCounts({});
+        try {
+            // Clearing local baseline
+            storage.delete('draexlmaier_form_ack');
+        } catch (e) { console.error('Error clearing acknowledged counts'); }
     };
 
     const deleteControl = (id: number) => {
@@ -422,17 +453,40 @@ const DraexlmaierApp = () => {
         }
     };
 
-    const handlePartierResolve = async (partierName: string) => {
-        const newResolved = {
-            ...partierResolved,
-            [partierName]: true
-        };
-        setPartierResolved(newResolved);
+    const handlePartierClick = async (partierName: string) => {
+        const defectCount = formData.partierDefauts[partierName]?.length || 0;
+        const baseline = formAcknowledgedCounts[partierName] || 0;
 
-        try {
-            await storage.set('draexlmaier_partier_resolved', JSON.stringify(newResolved), true);
-        } catch (error) {
-            console.error('Erreur lors de la sauvegarde du statut:', error);
+        // If currently showing red (new defects >= 10), clicking "acknowledges" them
+        // by setting the baseline to the current count.
+        if (defectCount - baseline >= 10) {
+            const newCounts = {
+                ...formAcknowledgedCounts,
+                [partierName]: defectCount
+            };
+            setFormAcknowledgedCounts(newCounts);
+            try {
+                await storage.set('draexlmaier_form_ack', JSON.stringify(newCounts), true);
+            } catch (e) {
+                console.error('Failed to save acknowledged counts', e);
+            }
+        }
+    };
+
+    const handleDashboardAcknowledgement = async (partierName: string, currentCount: number) => {
+        // Acknowledge alert from dashboard
+        const baseline = dashboardAcknowledgedCounts[partierName] || 0;
+        if ((currentCount - baseline) >= 10) {
+            const newCounts = {
+                ...dashboardAcknowledgedCounts,
+                [partierName]: currentCount
+            };
+            setDashboardAcknowledgedCounts(newCounts);
+            try {
+                await storage.set('draexlmaier_dashboard_ack', JSON.stringify(newCounts), true);
+            } catch (e) {
+                console.error('Failed to save acknowledged counts', e);
+            }
         }
     };
 
@@ -665,39 +719,48 @@ const DraexlmaierApp = () => {
                                     {getPartierLabel('Partier 1')} - {getPartierLabel('Partier 3')} - {getPartierLabel('Partier 5')}
                                 </div>
 
-                                {[PARTIERS[0], PARTIERS[2], PARTIERS[4]].map(partier => (
-                                    <details key={partier} className="mb-3 border-2 rounded-lg" style={{ borderColor: COLORS.lightBg }}>
-                                        <summary
-                                            className="cursor-pointer font-semibold p-3 rounded"
-                                            style={{
-                                                background: COLORS.lightBg,
-                                                color: COLORS.primary,
-                                                listStyle: 'none',
-                                                userSelect: 'none'
-                                            }}
-                                        >
-                                            <span>▼ {getPartierLabel(partier)} ({formData.partierDefauts[partier].length})</span>
-                                        </summary>
-                                        <div className="p-3">
-                                            <div className="flex flex-wrap gap-2">
-                                                {DEFAUTS.map(defaut => (
-                                                    <button
-                                                        key={defaut}
-                                                        className="px-3 py-2 rounded-md text-xs font-medium border-2 transition-all"
-                                                        style={{
-                                                            background: formData.partierDefauts[partier].includes(defaut) ? COLORS.danger : COLORS.white,
-                                                            color: formData.partierDefauts[partier].includes(defaut) ? COLORS.white : COLORS.darkGray,
-                                                            borderColor: formData.partierDefauts[partier].includes(defaut) ? COLORS.danger : COLORS.gray
-                                                        }}
-                                                        onClick={() => toggleDefaut(partier, defaut)}
-                                                    >
-                                                        {getDefautLabel(defaut)}
-                                                    </button>
-                                                ))}
+                                {[PARTIERS[0], PARTIERS[2], PARTIERS[4]].map(partier => {
+                                    const defectCount = formData.partierDefauts[partier]?.length || 0;
+                                    const baseline = formAcknowledgedCounts[partier] || 0;
+                                    // Show red if we have 10 or more NEW defects since last acknowledgement
+                                    const showRed = (defectCount - baseline) >= 10;
+
+                                    return (
+                                        <details key={partier} className="mb-3 border-2 rounded-lg" style={{ borderColor: COLORS.lightBg }}>
+                                            <summary
+                                                className="cursor-pointer font-semibold p-3 rounded"
+                                                style={{
+                                                    background: showRed ? COLORS.danger : COLORS.lightBg,
+                                                    color: showRed ? COLORS.white : COLORS.primary,
+                                                    listStyle: 'none',
+                                                    userSelect: 'none',
+                                                    transition: 'background-color 0.3s, color 0.3s'
+                                                }}
+                                                onClick={() => handlePartierClick(partier)}
+                                            >
+                                                <span>▼ {getPartierLabel(partier)} ({defectCount})</span>
+                                            </summary>
+                                            <div className="p-3">
+                                                <div className="flex flex-wrap gap-2">
+                                                    {DEFAUTS.map(defaut => (
+                                                        <button
+                                                            key={defaut}
+                                                            className="px-3 py-2 rounded-md text-xs font-medium border-2 transition-all"
+                                                            style={{
+                                                                background: formData.partierDefauts[partier].includes(defaut) ? COLORS.danger : COLORS.white,
+                                                                color: formData.partierDefauts[partier].includes(defaut) ? COLORS.white : COLORS.darkGray,
+                                                                borderColor: formData.partierDefauts[partier].includes(defaut) ? COLORS.danger : COLORS.gray
+                                                            }}
+                                                            onClick={() => toggleDefaut(partier, defaut)}
+                                                        >
+                                                            {getDefautLabel(defaut)}
+                                                        </button>
+                                                    ))}
+                                                </div>
                                             </div>
-                                        </div>
-                                    </details>
-                                ))}
+                                        </details>
+                                    );
+                                })}
                             </div>
 
                             <div>
@@ -753,39 +816,48 @@ const DraexlmaierApp = () => {
                                     {getPartierLabel('Partier 2')} - {getPartierLabel('Partier 4')} - {getPartierLabel('Partier 6')}
                                 </div>
 
-                                {[PARTIERS[1], PARTIERS[3], PARTIERS[5]].map(partier => (
-                                    <details key={partier} className="mb-3 border-2 rounded-lg" style={{ borderColor: COLORS.lightBg }}>
-                                        <summary
-                                            className="cursor-pointer font-semibold p-3 rounded"
-                                            style={{
-                                                background: COLORS.lightBg,
-                                                color: COLORS.primary,
-                                                listStyle: 'none',
-                                                userSelect: 'none'
-                                            }}
-                                        >
-                                            <span>▼ {getPartierLabel(partier)} ({formData.partierDefauts[partier].length})</span>
-                                        </summary>
-                                        <div className="p-3">
-                                            <div className="flex flex-wrap gap-2">
-                                                {DEFAUTS.map(defaut => (
-                                                    <button
-                                                        key={defaut}
-                                                        className="px-3 py-2 rounded-md text-xs font-medium border-2 transition-all"
-                                                        style={{
-                                                            background: formData.partierDefauts[partier].includes(defaut) ? COLORS.danger : COLORS.white,
-                                                            color: formData.partierDefauts[partier].includes(defaut) ? COLORS.white : COLORS.darkGray,
-                                                            borderColor: formData.partierDefauts[partier].includes(defaut) ? COLORS.danger : COLORS.gray
-                                                        }}
-                                                        onClick={() => toggleDefaut(partier, defaut)}
-                                                    >
-                                                        {getDefautLabel(defaut)}
-                                                    </button>
-                                                ))}
+                                {[PARTIERS[1], PARTIERS[3], PARTIERS[5]].map(partier => {
+                                    const defectCount = formData.partierDefauts[partier]?.length || 0;
+                                    const baseline = formAcknowledgedCounts[partier] || 0;
+                                    // Show red if we have 10 or more NEW defects since last acknowledgement
+                                    const showRed = (defectCount - baseline) >= 10;
+
+                                    return (
+                                        <details key={partier} className="mb-3 border-2 rounded-lg" style={{ borderColor: COLORS.lightBg }}>
+                                            <summary
+                                                className="cursor-pointer font-semibold p-3 rounded"
+                                                style={{
+                                                    background: showRed ? COLORS.danger : COLORS.lightBg,
+                                                    color: showRed ? COLORS.white : COLORS.primary,
+                                                    listStyle: 'none',
+                                                    userSelect: 'none',
+                                                    transition: 'background-color 0.3s, color 0.3s'
+                                                }}
+                                                onClick={() => handlePartierClick(partier)}
+                                            >
+                                                <span>▼ {getPartierLabel(partier)} ({defectCount})</span>
+                                            </summary>
+                                            <div className="p-3">
+                                                <div className="flex flex-wrap gap-2">
+                                                    {DEFAUTS.map(defaut => (
+                                                        <button
+                                                            key={defaut}
+                                                            className="px-3 py-2 rounded-md text-xs font-medium border-2 transition-all"
+                                                            style={{
+                                                                background: formData.partierDefauts[partier].includes(defaut) ? COLORS.danger : COLORS.white,
+                                                                color: formData.partierDefauts[partier].includes(defaut) ? COLORS.white : COLORS.darkGray,
+                                                                borderColor: formData.partierDefauts[partier].includes(defaut) ? COLORS.danger : COLORS.gray
+                                                            }}
+                                                            onClick={() => toggleDefaut(partier, defaut)}
+                                                        >
+                                                            {getDefautLabel(defaut)}
+                                                        </button>
+                                                    ))}
+                                                </div>
                                             </div>
-                                        </div>
-                                    </details>
-                                ))}
+                                        </details>
+                                    );
+                                })}
                             </div>
                         </div>
                     </div>
@@ -1018,8 +1090,8 @@ const DraexlmaierApp = () => {
                             {[1, 2, 3, 4, 5, 6].map(num => {
                                 const partierName = `Partier ${num}`;
                                 const defautsCount = getPartierDefautsCount(partierName);
-                                const isResolved = partierResolved[partierName];
-                                const hasAlert = defautsCount > 10 && !isResolved;
+                                const baseline = dashboardAcknowledgedCounts[partierName] || 0;
+                                const hasAlert = (defautsCount - baseline) >= 10;
 
                                 return (
                                     <div key={num} className="border-2 rounded-lg overflow-hidden w-fit" style={{
@@ -1041,7 +1113,7 @@ const DraexlmaierApp = () => {
                                                 />
                                                 <div
                                                     className={hasAlert ? "cursor-pointer" : ""}
-                                                    onClick={() => hasAlert && handlePartierResolve(partierName)}
+                                                    onClick={() => hasAlert && handleDashboardAcknowledgement(partierName, defautsCount)}
                                                     style={{
                                                         background: hasAlert ? COLORS.danger : COLORS.success,
                                                         color: 'white',
