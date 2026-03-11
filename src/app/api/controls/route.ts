@@ -30,3 +30,14 @@ export async function POST(req: Request) {
         return NextResponse.json({ error: "Failed to save control" }, { status: 500 });
     }
 }
+
+export async function DELETE(req: Request) {
+    try {
+        await connectToDatabase();
+        await ControlModel.deleteMany({});
+        return NextResponse.json({ message: 'All history deleted successfully' });
+    } catch (error) {
+        console.error("Error deleting history:", error);
+        return NextResponse.json({ error: "Failed to delete history" }, { status: 500 });
+    }
+}

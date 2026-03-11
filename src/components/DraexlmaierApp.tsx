@@ -8,8 +8,9 @@ import {
 } from 'recharts';
 import {
     AlertCircle, Save, Trash2, Plus, LogOut, BarChart3,
-    Download, Search, Calendar, User, CheckCircle, Globe
+    Download, Search, Calendar, User, CheckCircle, Globe, Settings
 } from 'lucide-react';
+import * as XLSX from 'xlsx';
 import { storage } from '../lib/storage'; // Import our storage utility
 import { translations, Language } from '../lib/translations';
 
@@ -356,6 +357,48 @@ const DraexlmaierApp = () => {
         }
     };
 
+    const handleDeleteHistory = async () => {
+        if (window.confirm(t.settings.deleteHistoryConfirm)) {
+            try {
+                const res = await fetch('/api/controls', { method: 'DELETE' });
+                if (res.ok) {
+                    setControlData([]);
+                    alert(t.settings.historyDeleted);
+                } else {
+                    console.error('Failed to delete history');
+                }
+            } catch (e) {
+                console.error('Error deleting history:', e);
+            }
+        }
+    };
+
+    const handleExportExcel = () => {
+        const dataToExport = filteredData.map(c => ({
+            [t.history.table.date]: new Date(c.date).toLocaleString(language === 'ar' ? 'ar-MA' : 'fr-FR'),
+            [t.history.table.user]: c.username,
+            [t.history.table.shift]: c.shift,
+            [t.history.table.nmKsk]: c.nmKsk,
+            [t.history.table.nmBbrd]: c.nmBbrd,
+            [t.history.table.defects]: c.totalDefauts,
+            // Map the defects summary into a readable string
+            [t.history.details.defectsDetected]: Object.entries(c.partierDefauts)
+                .filter(([_, defs]) => Object.keys(defs as object).length > 0)
+                .map(([partier, defs]) => {
+                    const defectsList = Object.entries(defs as Record<string, number>)
+                        .map(([type, count]) => `${t.defects[type as keyof typeof t.defects]}: ${count}`)
+                        .join(', ');
+                    return `${partier} (${defectsList})`;
+                }).join(' | '),
+            [t.history.details.comment]: c.commentaire || ''
+        }));
+
+        const ws = XLSX.utils.json_to_sheet(dataToExport);
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, "History");
+        XLSX.writeFile(wb, "Controles_History.xlsx");
+    };
+
     const filteredData = controlData.filter(c => {
         const matchesSearch = c.nmKsk.toLowerCase().includes(searchTerm.toLowerCase()) ||
             c.nmBbrd.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -458,11 +501,11 @@ const DraexlmaierApp = () => {
         const baseline = formAcknowledgedCounts[partierName] || 0;
 
         // If currently showing red (new defects >= 10), clicking "acknowledges" them
-        // by setting the baseline to the current count.
-        if (defectCount - baseline >= 10) {
+        if (defectCount >= baseline + 10) {
+            const newBaseline = Math.floor(defectCount / 10) * 10;
             const newCounts = {
                 ...formAcknowledgedCounts,
-                [partierName]: defectCount
+                [partierName]: newBaseline
             };
             setFormAcknowledgedCounts(newCounts);
             try {
@@ -474,19 +517,19 @@ const DraexlmaierApp = () => {
     };
 
     const handleDashboardAcknowledgement = async (partierName: string, currentCount: number) => {
-        // Acknowledge alert from dashboard
-        const baseline = dashboardAcknowledgedCounts[partierName] || 0;
-        if ((currentCount - baseline) >= 10) {
-            const newCounts = {
-                ...dashboardAcknowledgedCounts,
-                [partierName]: currentCount
-            };
-            setDashboardAcknowledgedCounts(newCounts);
-            try {
-                await storage.set('draexlmaier_dashboard_ack', JSON.stringify(newCounts), true);
-            } catch (e) {
-                console.error('Failed to save acknowledged counts', e);
-            }
+        // Acknowledge alert from dashboard by setting baseline to the current count rounded down to nearest 10
+        // E.g., if currentCount is 12, baseline becomes 10. Next alert at 20.
+        const newBaseline = Math.floor(currentCount / 10) * 10;
+
+        const newCounts = {
+            ...dashboardAcknowledgedCounts,
+            [partierName]: newBaseline
+        };
+        setDashboardAcknowledgedCounts(newCounts);
+        try {
+            await storage.set('draexlmaier_dashboard_ack', JSON.stringify(newCounts), true);
+        } catch (e) {
+            console.error('Failed to save acknowledged counts', e);
         }
     };
 
@@ -596,79 +639,97 @@ const DraexlmaierApp = () => {
             </div>
         );
     }
-
     const Header = () => (
-        <div className="bg-white p-5 shadow-md" style={{ borderBottom: `3px solid ${COLORS.primary}` }}>
-            <div className="max-w-7xl mx-auto">
-                <div className="flex justify-between items-start flex-wrap gap-4">
-                    <div className="flex gap-5 items-start">
-                        <div>
-                            <div className="text-2xl font-bold" style={{ color: COLORS.primary }}>
-                                {t.appTitle} <span className="text-lg font-normal">{t.appSubtitle}</span>
-                            </div>
-                            <div className="text-sm mt-1" style={{ color: '#000000', fontWeight: '600' }}>
-                                <User size={14} className="inline mr-1" />
-                                {username} | Shift: {shift}
+        <div className="bg-white shadow">
+            <div className="max-w-7xl mx-auto px-4 py-2">
+                <div className="flex justify-between items-center">
+                    <div className="flex items-center gap-2">
+                        <div className="w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center overflow-hidden">
+                            <img
+                                src="/logo.png"
+                                alt="Logo"
+                                className="w-8 h-8 object-contain"
+                                onError={(e) => {
+                                    (e.target as HTMLImageElement).style.display = 'none';
+                                    (e.target as HTMLImageElement).nextElementSibling?.classList.remove('hidden');
+                                }}
+                            />
+                            <div className="hidden font-bold text-lg" style={{ color: COLORS.primary }}>
+                                DRX
                             </div>
                         </div>
+                        <div className="text-xl font-bold" style={{ color: COLORS.primary }}>
+                            {t.header.dashboard}
+                        </div>
+                    </div>
 
-                        <div className="flex flex-col gap-2 ltr:ml-[20mm] rtl:mr-[20mm]" style={language === 'ar' ? { marginRight: '20mm' } : { marginLeft: '20mm' }}>
-                            <div className="flex gap-2">
-                                <LanguageSwitcher />
+                    <div className="flex items-center gap-4">
+                        <div className="flex flex-col gap-1 ltr:ml-[20mm] rtl:mr-[20mm]" style={language === 'ar' ? { marginRight: '20mm' } : { marginLeft: '20mm' }}>
+                            <div className="flex gap-2 justify-end">
+                                <button
+                                    className="px-3 py-1 text-sm rounded-lg font-semibold flex items-center gap-1 transition-colors"
+                                    style={{
+                                        background: currentPage === 'settings' ? COLORS.primary : COLORS.white,
+                                        color: currentPage === 'settings' ? COLORS.white : COLORS.primary,
+                                        border: `1px solid ${COLORS.primary}`
+                                    }}
+                                    onClick={() => setCurrentPage('settings')}
+                                >
+                                    <Settings size={16} />
+                                    {t.header.settings}
+                                </button>
+                                <button
+                                    className="px-3 py-1 text-sm rounded-lg font-semibold flex items-center gap-1 transition-colors"
+                                    style={{
+                                        background: currentPage === 'analytics' ? COLORS.primary : COLORS.white,
+                                        color: currentPage === 'analytics' ? COLORS.white : COLORS.primary,
+                                        border: `1px solid ${COLORS.primary}`
+                                    }}
+                                    onClick={() => setCurrentPage('analytics')}
+                                >
+                                    <BarChart3 size={16} />
+                                    {t.header.dashboard}
+                                </button>
                             </div>
                             <div className="flex gap-2">
                                 <button
-                                    className="px-5 py-2 rounded-lg font-semibold flex items-center gap-2"
+                                    className="px-3 py-1 text-sm rounded-lg font-semibold flex items-center gap-1 transition-colors"
                                     style={{
-                                        background: COLORS.white,
-                                        color: COLORS.primary,
-                                        border: `2px solid ${COLORS.primary}`
+                                        background: currentPage === 'form' ? COLORS.primary : COLORS.white,
+                                        color: currentPage === 'form' ? COLORS.white : COLORS.primary,
+                                        border: `1px solid ${COLORS.primary}`
                                     }}
-                                    onClick={handleLogout}
+                                    onClick={() => setCurrentPage('form')}
                                 >
-                                    <LogOut size={18} />
-                                    {t.header.logout}
+                                    <Plus size={16} />
+                                    {t.header.newControl}
                                 </button>
                                 <button
-                                    className="px-5 py-2 rounded-lg font-semibold flex items-center gap-2"
+                                    className="px-3 py-1 text-sm rounded-lg font-semibold flex items-center gap-1 transition-colors"
                                     style={{
                                         background: currentPage === 'history' ? COLORS.primary : COLORS.white,
                                         color: currentPage === 'history' ? COLORS.white : COLORS.primary,
-                                        border: `2px solid ${COLORS.primary}`
+                                        border: `1px solid ${COLORS.primary}`
                                     }}
                                     onClick={() => setCurrentPage('history')}
                                 >
-                                    <Calendar size={18} />
+                                    <Calendar size={16} />
                                     {t.header.history}
                                 </button>
                             </div>
                         </div>
-                    </div>
-
-                    <div className="flex gap-2">
+                        <div className="flex items-center gap-2 px-3 py-1 bg-gray-50 rounded-lg border">
+                            <User size={16} className="text-gray-500" />
+                            <span className="font-semibold text-sm" style={{ color: COLORS.gray }}>
+                                {username}
+                            </span>
+                        </div>
                         <button
-                            className="px-5 py-2 rounded-lg font-semibold flex items-center gap-2"
-                            style={{
-                                background: currentPage === 'control' ? COLORS.primary : COLORS.white,
-                                color: currentPage === 'control' ? COLORS.white : COLORS.primary,
-                                border: `2px solid ${COLORS.primary}`
-                            }}
-                            onClick={() => setCurrentPage('control')}
+                            className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+                            onClick={handleLogout}
+                            title={t.header.logout}
                         >
-                            <Plus size={18} />
-                            {t.header.newControl}
-                        </button>
-                        <button
-                            className="px-5 py-2 rounded-lg font-semibold flex items-center gap-2"
-                            style={{
-                                background: currentPage === 'analytics' ? COLORS.primary : COLORS.white,
-                                color: currentPage === 'analytics' ? COLORS.white : COLORS.primary,
-                                border: `2px solid ${COLORS.primary}`
-                            }}
-                            onClick={() => setCurrentPage('analytics')}
-                        >
-                            <BarChart3 size={18} />
-                            {t.header.dashboard}
+                            <LogOut size={18} />
                         </button>
                     </div>
                 </div>
@@ -934,10 +995,13 @@ const DraexlmaierApp = () => {
 
                         <div className="flex gap-4 mb-5 flex-wrap">
                             <div className="flex-1 relative min-w-64">
-                                <Search size={18} className="absolute left-3 top-3 rtl:right-3 rtl:left-auto" style={{ color: COLORS.gray }} />
+                                <div className="absolute top-3 left-3" style={{ color: COLORS.gray }}>
+                                    <Search size={20} />
+                                </div>
                                 <input
+                                    type="text"
                                     className="w-full pl-10 rtl:pr-10 rtl:pl-3 p-3 border-2 rounded-lg"
-                                    placeholder={t.history.searchPlaceholder}
+                                    placeholder={t.history.search}
                                     value={searchTerm}
                                     onChange={e => setSearchTerm(e.target.value)}
                                 />
@@ -1071,6 +1135,8 @@ const DraexlmaierApp = () => {
         const totalControls = controlData.length;
         const totalDefauts = controlData.reduce((acc, c) => acc + c.totalDefauts, 0);
         const avgDefauts = totalControls > 0 ? (totalDefauts / totalControls).toFixed(1) : 0;
+        const controlsWithoutErrors = controlData.filter(c => c.totalDefauts === 0).length;
+        const controlsWithErrors = controlData.filter(c => c.totalDefauts > 0).length;
 
         const getPartierDefautsCount = (partierName: string) => {
             return controlData
@@ -1086,16 +1152,17 @@ const DraexlmaierApp = () => {
                         <div className="text-xl font-bold mb-5" style={{ color: COLORS.primary }}>
                             {t.analytics.referenceImages}
                         </div>
-                        <div className="grid grid-cols-2 gap-1 w-fit mx-auto">
+                        <div className="grid grid-cols-2 gap-4 w-fit mx-auto">
                             {[1, 2, 3, 4, 5, 6].map(num => {
                                 const partierName = `Partier ${num}`;
                                 const defautsCount = getPartierDefautsCount(partierName);
                                 const baseline = dashboardAcknowledgedCounts[partierName] || 0;
-                                const hasAlert = (defautsCount - baseline) >= 10;
+                                // Alert triggers when total defautsCount reaches (baseline + 10)
+                                const hasAlert = defautsCount >= baseline + 10;
 
                                 return (
                                     <div key={num} className="border-2 rounded-lg overflow-hidden w-fit" style={{
-                                        borderColor: hasAlert ? COLORS.danger : COLORS.lightBg,
+                                        borderColor: hasAlert ? COLORS.danger : COLORS.success,
                                         borderWidth: hasAlert ? '4px' : '2px'
                                     }}>
                                         {dashboardImages[`img${num}`] ? (
@@ -1105,7 +1172,7 @@ const DraexlmaierApp = () => {
                                                     alt={`Partier ${num}`}
                                                     style={{
                                                         width: 'auto',
-                                                        height: '120px',
+                                                        height: '140px',
                                                         maxWidth: '100%',
                                                         objectFit: 'contain',
                                                         backgroundColor: '#f8f9fa'
@@ -1117,15 +1184,12 @@ const DraexlmaierApp = () => {
                                                     style={{
                                                         background: hasAlert ? COLORS.danger : COLORS.success,
                                                         color: 'white',
-                                                        padding: '8px',
+                                                        padding: hasAlert ? '8px' : '4px',
                                                         textAlign: 'center'
                                                     }}
                                                 >
-                                                    <div className="text-xs font-semibold">
-                                                        {getPartierLabel(`Partier ${num}`)}
-                                                    </div>
                                                     {hasAlert && (
-                                                        <div className="text-xs mt-1">
+                                                        <div className="text-xs">
                                                             ⚠️ {defautsCount} {t.analytics.defects}
                                                             <div className="text-xs mt-1 font-bold">
                                                                 {t.analytics.clickToFinish}
@@ -1135,7 +1199,7 @@ const DraexlmaierApp = () => {
                                                 </div>
                                             </div>
                                         ) : (
-                                            <div className="p-4 text-center" style={{ height: '120px', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+                                            <div className="p-4 text-center" style={{ height: '140px', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
                                                 <input
                                                     type="file"
                                                     accept="image/*"
@@ -1148,10 +1212,7 @@ const DraexlmaierApp = () => {
                                                     className="cursor-pointer"
                                                     style={{ display: 'block' }}
                                                 >
-                                                    <div style={{ fontSize: '24px', marginBottom: '4px' }}>📤</div>
-                                                    <div className="text-xs font-semibold" style={{ color: COLORS.primary }}>
-                                                        {getPartierLabel(`Partier ${num}`)}
-                                                    </div>
+                                                    <div style={{ fontSize: '24px' }}>📤</div>
                                                 </label>
                                             </div>
                                         )}
@@ -1169,8 +1230,16 @@ const DraexlmaierApp = () => {
                             <div className="text-4xl font-bold mb-2" style={{ color: COLORS.primary }}>
                                 {totalControls}
                             </div>
-                            <div className="text-sm font-medium" style={{ color: COLORS.gray }}>
-                                {t.analytics.totalControls}
+                            <div className="text-sm font-medium flex flex-col gap-2" style={{ color: COLORS.gray }}>
+                                <span>{t.analytics.totalControls}</span>
+                                <div className="flex gap-2 flex-wrap">
+                                    <span className="text-xs px-2 py-1 rounded-full font-bold" style={{ background: '#dcfce7', color: '#166534' }}>
+                                        {controlsWithoutErrors} {t.analytics.withoutErrors}
+                                    </span>
+                                    <span className="text-xs px-2 py-1 rounded-full font-bold" style={{ background: '#fee2e2', color: '#991b1b' }}>
+                                        {controlsWithErrors} {t.analytics.withErrors}
+                                    </span>
+                                </div>
                             </div>
                         </div>
                         <div className="bg-white p-6 rounded-xl shadow" style={{ borderLeft: `4px solid ${COLORS.danger}` }}>
@@ -1323,6 +1392,42 @@ const DraexlmaierApp = () => {
                             </ResponsiveContainer>
                         </div>
                     )}
+                </div>
+            </div>
+        );
+    }
+
+    if (currentPage === 'settings') {
+        return (
+            <div className="min-h-screen" dir={language === 'ar' ? 'rtl' : 'ltr'} style={{ background: COLORS.lightBg }}>
+                <Header />
+                <div className="max-w-7xl mx-auto p-8">
+                    <div className="bg-white p-6 rounded-xl shadow mb-5">
+                        <div className="text-xl font-bold mb-5 flex items-center gap-2" style={{ color: COLORS.primary }}>
+                            <Settings size={24} />
+                            {t.settings.title}
+                        </div>
+
+                        <div className="mb-8">
+                            <h3 className="text-lg font-semibold mb-3 border-b-2 pb-2" style={{ color: COLORS.darkGray, borderColor: COLORS.lightBg }}>
+                                {t.settings.language}
+                            </h3>
+                            <LanguageSwitcher />
+                        </div>
+
+                        <div>
+                            <h3 className="text-lg font-semibold mb-3 border-b-2 pb-2 text-red-600" style={{ borderColor: COLORS.lightBg }}>
+                                Danger Zone
+                            </h3>
+                            <button
+                                className="px-6 py-3 rounded-lg font-semibold flex items-center gap-2 text-white bg-red-600 hover:bg-red-700 transition-colors"
+                                onClick={handleDeleteHistory}
+                            >
+                                <Trash2 size={18} />
+                                {t.settings.deleteHistory}
+                            </button>
+                        </div>
+                    </div>
                 </div>
             </div>
         );

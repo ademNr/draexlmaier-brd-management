@@ -24,7 +24,8 @@ export const translations = {
             logout: "Déconnexion",
             history: "Historique",
             newControl: "Nouveau Contrôle",
-            dashboard: "Tableau de bord"
+            dashboard: "Tableau de bord",
+            settings: "Paramètres"
         },
         control: {
             title: "Informations du Contrôle",
@@ -51,7 +52,10 @@ export const translations = {
         },
         history: {
             title: "Historique des Contrôles",
-            searchPlaceholder: "Rechercher par NM KSK, NM BBRD ou utilisateur...",
+            search: "Rechercher...",
+            export: "Exporter (Excel)",
+            noResults: "Aucun résultat trouvé",
+            delete: "Supprimer",
             allShifts: "Tous les shifts",
             noData: "Aucun contrôle trouvé",
             table: {
@@ -85,8 +89,17 @@ export const translations = {
             defectTrend: "Tendance des Défauts (10 derniers contrôles)",
             defects: "défauts",
             controls: "contrôles",
+            withoutErrors: "sans erreurs",
+            withErrors: "avec erreurs",
             saveImage: "Image {number} sauvegardée pour tous les utilisateurs!",
             selectValidImage: "Veuillez sélectionner une image valide"
+        },
+        settings: {
+            title: "Paramètres",
+            language: "Langue",
+            deleteHistory: "Supprimer l'historique",
+            deleteHistoryConfirm: "Êtes-vous sûr de vouloir supprimer tout l'historique de tous les utilisateurs ?",
+            historyDeleted: "Historique supprimé avec succès"
         },
         defects: {
             'Faux Acheminement': 'Faux Acheminement',
@@ -128,7 +141,8 @@ export const translations = {
             logout: "Logout",
             history: "History",
             newControl: "New Control",
-            dashboard: "Dashboard"
+            dashboard: "Dashboard",
+            settings: "Settings"
         },
         control: {
             title: "Control Information",
@@ -155,7 +169,10 @@ export const translations = {
         },
         history: {
             title: "Control History",
-            searchPlaceholder: "Search by KSK, BBRD or user...",
+            search: "Search...",
+            export: "Export (Excel)",
+            noResults: "No results found",
+            delete: "Delete",
             allShifts: "All shifts",
             noData: "No controls found",
             table: {
@@ -189,8 +206,17 @@ export const translations = {
             defectTrend: "Defect Trend (Last 10 controls)",
             defects: "defects",
             controls: "controls",
+            withoutErrors: "without errors",
+            withErrors: "with errors",
             saveImage: "Image {number} saved for all users!",
             selectValidImage: "Please select a valid image"
+        },
+        settings: {
+            title: "Settings",
+            language: "Language",
+            deleteHistory: "Delete History",
+            deleteHistoryConfirm: "Are you sure you want to delete all history for all users?",
+            historyDeleted: "History deleted successfully"
         },
         defects: {
             'Faux Acheminement': 'Wrong Routing',
@@ -232,7 +258,8 @@ export const translations = {
             logout: "تسجيل الخروج",
             history: "السجل",
             newControl: "فحص جديد",
-            dashboard: "لوحة القيادة"
+            dashboard: "لوحة القيادة",
+            settings: "الإعدادات"
         },
         control: {
             title: "معلومات الفحص",
@@ -259,7 +286,10 @@ export const translations = {
         },
         history: {
             title: "سجل الفحوصات",
-            searchPlaceholder: "بحث برقم KSK أو BBRD أو المستخدم...",
+            search: "بحث...",
+            export: "تصدير (Excel)",
+            noResults: "لا توجد نتائج",
+            delete: "حذف",
             allShifts: "كل الورديات",
             noData: "لا توجد فحوصات",
             table: {
@@ -293,8 +323,17 @@ export const translations = {
             defectTrend: "اتجاه العيوب (آخر 10 فحوصات)",
             defects: "عيوب",
             controls: "فحوصات",
+            withoutErrors: "بدون أخطاء",
+            withErrors: "بأخطاء",
             saveImage: "تم حفظ الصورة {number} لجميع المستخدمين!",
             selectValidImage: "يرجى اختيار صورة صالحة"
+        },
+        settings: {
+            title: "الإعدادات",
+            language: "اللغة",
+            deleteHistory: "حذف السجل",
+            deleteHistoryConfirm: "هل أنت متأكد من حذف السجل بالكامل لجميع المستخدمين؟",
+            historyDeleted: "تم حذف السجل بنجاح"
         },
         defects: {
             'Faux Acheminement': 'توجيه خاطئ',
