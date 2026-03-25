@@ -74,7 +74,7 @@ export const translations = {
             confirmDelete: "Êtes-vous sûr de vouloir supprimer ce contrôle?"
         },
         analytics: {
-            referenceImages: "Images de Référence par Partier",
+            referenceImages: "Images de Référence par Partie",
             clickToFinish: "Cliquer: Contrôle terminé",
             infoImages: "ℹ️ Ces images sont partagées entre tous les utilisateurs. Un cadre rouge indique plus de 10 défauts. Cliquez sur le badge rouge pour marquer le contrôle comme terminé.",
             totalControls: "Total Contrôles",
@@ -85,7 +85,7 @@ export const translations = {
             defectsByDay: "Défauts par Jour",
             defectsByWeek: "Défauts par Semaine",
             defectRateByShift: "Taux de Défauts par Shift",
-            defectsByPartier: "Défauts par Partier",
+            defectsByPartier: "Défauts par Partie",
             defectTrend: "Tendance des Défauts (10 derniers contrôles)",
             defects: "défauts",
             controls: "contrôles",
@@ -110,12 +110,12 @@ export const translations = {
             'Module Manquant': 'Module Manquant'
         },
         partiers: {
-            'Partier 1': 'Partier 1',
-            'Partier 2': 'Partier 2',
-            'Partier 3': 'Partier 3',
-            'Partier 4': 'Partier 4',
-            'Partier 5': 'Partier 5',
-            'Partier 6': 'Partier 6'
+            'Partier 1': 'Partie 1',
+            'Partier 2': 'Partie 2',
+            'Partier 3': 'Partie 3',
+            'Partier 4': 'Partie 4',
+            'Partier 5': 'Partie 5',
+            'Partier 6': 'Partie 6'
         }
     },
     en: {

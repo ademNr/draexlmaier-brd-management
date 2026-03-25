@@ -1156,9 +1156,8 @@ const DraexlmaierApp = () => {
                             {[1, 2, 3, 4, 5, 6].map(num => {
                                 const partierName = `Partier ${num}`;
                                 const defautsCount = getPartierDefautsCount(partierName);
-                                const baseline = dashboardAcknowledgedCounts[partierName] || 0;
-                                // Alert triggers when total defautsCount reaches (baseline + 10)
-                                const hasAlert = defautsCount >= baseline + 10;
+                                // Permanently red once the partie reaches 10 or more defects
+                                const hasAlert = defautsCount >= 10;
 
                                 return (
                                     <div key={num} className="border-2 rounded-lg overflow-hidden w-fit" style={{
@@ -1179,8 +1178,6 @@ const DraexlmaierApp = () => {
                                                     }}
                                                 />
                                                 <div
-                                                    className={hasAlert ? "cursor-pointer" : ""}
-                                                    onClick={() => hasAlert && handleDashboardAcknowledgement(partierName, defautsCount)}
                                                     style={{
                                                         background: hasAlert ? COLORS.danger : COLORS.success,
                                                         color: 'white',
@@ -1191,9 +1188,6 @@ const DraexlmaierApp = () => {
                                                     {hasAlert && (
                                                         <div className="text-xs">
                                                             ⚠️ {defautsCount} {t.analytics.defects}
-                                                            <div className="text-xs mt-1 font-bold">
-                                                                {t.analytics.clickToFinish}
-                                                            </div>
                                                         </div>
                                                     )}
                                                 </div>
@@ -1358,22 +1352,7 @@ const DraexlmaierApp = () => {
                         </div>
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-5 mb-5">
-                        <div className="bg-white p-6 rounded-xl shadow">
-                            <div className="text-xl font-bold mb-5" style={{ color: COLORS.primary }}>
-                                {t.analytics.defectsByPartier}
-                            </div>
-                            <ResponsiveContainer width="100%" height={300}>
-                                <BarChart data={partierData} layout="horizontal">
-                                    <CartesianGrid strokeDasharray="3 3" />
-                                    <XAxis type="number" />
-                                    <YAxis dataKey="name" type="category" width={80} />
-                                    <Tooltip />
-                                    <Bar dataKey="defauts" fill={COLORS.accent} />
-                                </BarChart>
-                            </ResponsiveContainer>
-                        </div>
-                    </div>
+
 
                     {trendData.length > 0 && (
                         <div className="bg-white p-6 rounded-xl shadow mb-5">

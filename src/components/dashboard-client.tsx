@@ -2,34 +2,26 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { AnalyticsSummary, BrdCard as BrdCardType } from "@/lib/data";
+import { BrdCard as BrdCardType } from "@/lib/data";
 import { BrdCard } from "./brd-card";
 import { NewBrdForm } from "./new-brd-form";
-import { AnalyticsZoneType } from "./analytics-zone-type";
-import { AnalyticsTimeType } from "./analytics-time-type";
 
 type Props = {
   initialCards: BrdCardType[];
-  initialAnalytics?: AnalyticsSummary;
 };
 
-export function DashboardClient({ initialCards, initialAnalytics }: Props) {
+export function DashboardClient({ initialCards }: Props) {
   const [cards, setCards] = useState<BrdCardType[]>(initialCards);
-  const [analytics, setAnalytics] = useState<AnalyticsSummary | undefined>(initialAnalytics);
   const [loading, setLoading] = useState(false);
   const [navOpen, setNavOpen] = useState(false);
 
   async function refresh() {
     setLoading(true);
     try {
-      const [brdRes, analyticsRes] = await Promise.all([fetch("/api/brds"), fetch("/api/analytics/summary")]);
+      const brdRes = await fetch("/api/brds");
       if (brdRes.ok) {
         const data = await brdRes.json();
         setCards(data.data);
-      }
-      if (analyticsRes.ok) {
-        const data = await analyticsRes.json();
-        setAnalytics(data.data);
       }
     } finally {
       setLoading(false);
@@ -160,18 +152,7 @@ export function DashboardClient({ initialCards, initialAnalytics }: Props) {
         )}
       </section>
 
-      {analytics ? (
-        <section id="analytics-section" className="space-y-3 scroll-mt-20">
-          <div className="flex items-center justify-between">
-            <h3 className="text-lg font-bold text-slate-800">Tableau de bord défauts</h3>
-            <span className="text-xs text-slate-500">Zones, types et chronologie</span>
-          </div>
-          <div className="grid gap-4 lg:grid-cols-2">
-            <AnalyticsZoneType data={analytics.perSectionType} />
-            <AnalyticsTimeType initial={analytics.timeSeriesByType} />
-          </div>
-        </section>
-      ) : null}
+
 
     </div>
   );

@@ -22,7 +22,6 @@ export function AnalyticsPanel({ analytics }: { analytics: AnalyticsSummary }) {
   const maxType = Math.max(...analytics.defectsByType.map((d) => d.value), 1);
   const maxSection = Math.max(...analytics.defectsPerSection.map((d) => d.value), 1);
   const maxShift = Math.max(...analytics.defectsPerShift.map((d) => d.value), 1);
-  const maxTime = Math.max(...(analytics.timeSeries ?? []).map((d) => d.value), 1);
 
   return (
     <div className="flex flex-col gap-6 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
@@ -56,18 +55,7 @@ export function AnalyticsPanel({ analytics }: { analytics: AnalyticsSummary }) {
           </div>
         </div>
       </div>
-      <div>
-        <p className="text-xs font-semibold uppercase text-slate-500">Défauts dans le temps</p>
-        <div className="mt-2 flex flex-col gap-2">
-          {(analytics.timeSeries ?? []).length === 0 ? (
-            <span className="text-xs text-slate-400">Pas encore de données</span>
-          ) : (
-            (analytics.timeSeries ?? []).map((row) => (
-              <ChartRow key={row.label} label={row.label} value={row.value} max={maxTime} />
-            ))
-          )}
-        </div>
-      </div>
+
     </div>
   );
 }
