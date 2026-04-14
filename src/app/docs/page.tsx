@@ -17,44 +17,44 @@ import Link from 'next/link';
 
 export const metadata = {
     title: 'Documentation | DRÄXLMAIER PQM',
-    description: 'Technical documentation and feature overview for the DRÄXLMAIER Production Quality Management platform.',
+    description: 'Documentation technique et aperçu des fonctionnalités pour la plateforme DRÄXLMAIER Production Quality Management.',
 };
 
 export default function DocsPage() {
     const techStack = [
         {
             name: 'Next.js 16',
-            description: 'React framework for production, utilizing App Router and Server Components for optimal performance.',
+            description: 'Framework React pour la production, utilisant l\'App Router et les Server Components pour des performances optimales.',
             icon: <Zap className="text-blue-500" size={24} />,
             color: 'from-blue-500/10 to-blue-600/10 border-blue-200'
         },
         {
             name: 'Tailwind CSS v4',
-            description: 'Utility-first CSS framework for rapid UI development with a focus on modern design aesthetics.',
+            description: 'Framework CSS utilitaire pour un développement UI rapide avec une esthétique moderne.',
             icon: <Layout className="text-cyan-500" size={24} />,
             color: 'from-cyan-500/10 to-cyan-600/10 border-cyan-200'
         },
         {
             name: 'MongoDB & Mongoose',
-            description: 'NoSQL database for flexible data modeling and robust storage of production control records.',
+            description: 'Base de données NoSQL pour une modélisation flexible et un stockage robuste des enregistrements de production.',
             icon: <Database className="text-emerald-500" size={24} />,
             color: 'from-emerald-500/10 to-emerald-600/10 border-emerald-200'
         },
         {
             name: 'Recharts',
-            description: 'A composable charting library built with React components for detailed data visualization.',
+            description: 'Bibliothèque de graphiques composables construite avec des composants React pour une visualisation détaillée.',
             icon: <BarChart3 className="text-orange-500" size={24} />,
             color: 'from-orange-500/10 to-orange-600/10 border-orange-200'
         },
         {
             name: 'Lucide React',
-            description: 'Beautiful & consistent icon toolkit for modern web applications.',
+            description: 'Kit d\'icônes cohérent et élégant pour les applications web modernes.',
             icon: <Cpu className="text-purple-500" size={24} />,
             color: 'from-purple-500/10 to-purple-600/10 border-purple-200'
         },
         {
             name: 'SheetJS (XLSX)',
-            description: 'Library for spreadsheet data processing and export capabilities.',
+            description: 'Bibliothèque pour le traitement des feuilles de calcul et les capacités d\'exportation.',
             icon: <FileSpreadsheet className="text-green-600" size={24} />,
             color: 'from-green-500/10 to-green-600/10 border-green-200'
         }
@@ -62,33 +62,33 @@ export default function DocsPage() {
 
     const features = [
         {
-            title: 'Real-time QC Monitoring',
-            description: 'Instant logging of quality controls with multi-user synchronization.',
+            title: 'Suivi Qualité en Temps Réel',
+            description: 'Enregistrement instantané des contrôles qualité avec synchronisation multi-utilisateurs.',
             icon: <RefreshCw size={20} />
         },
         {
-            title: 'Shared Reference Images',
-            description: 'Global access to reference images to ensure consistent quality standards across shifts.',
+            title: 'Images de Référence Partagées',
+            description: 'Accès global aux images de référence pour garantir des standards de qualité constants.',
             icon: <Layout size={20} />
         },
         {
-            title: 'Advanced Analytics',
-            description: 'Deep insights into defect trends, shift performance, and partier reliability.',
+            title: 'Analyses Avancées',
+            description: 'Informations approfondies sur les tendances de défauts et les performances des shifts.',
             icon: <BarChart3 size={20} />
         },
         {
-            title: 'Multi-lingual Support',
-            description: 'Full interface translations for French, English, and Arabic (RTL support).',
+            title: 'Support Multilingue',
+            description: 'Interface entièrement traduite en Français, Anglais et Arabe (support RTL).',
             icon: <Globe size={20} />
         },
         {
-            title: 'History Management',
-            description: 'Comprehensive historical logs with search, filter, and drill-down details.',
+            title: 'Gestion de l\'Historique',
+            description: 'Journaux historiques complets avec recherche, filtrage et détails approfondis.',
             icon: <History size={20} />
         },
         {
-            title: 'Data Reliability',
-            description: 'Session persistence and robust data validation to prevent data loss.',
+            title: 'Fiabilité des Données',
+            description: 'Persistance de session et validation robuste des données pour éviter toute perte.',
             icon: <Shield size={20} />
         }
     ];
@@ -105,7 +105,7 @@ export default function DocsPage() {
                         <span className="font-bold text-lg tracking-tight text-[#003d7a]">PQM DOCS</span>
                     </div>
                     <Link href="/" className="px-4 py-2 text-sm font-semibold text-[#003d7a] hover:bg-blue-50 rounded-full transition-colors flex items-center gap-2">
-                        Back to App <ArrowRight size={16} />
+                        Retour à l'App <ArrowRight size={16} />
                     </Link>
                 </div>
             </nav>
@@ -114,18 +114,18 @@ export default function DocsPage() {
                 {/* Hero Section */}
                 <section className="text-center mb-24">
                     <h1 className="text-5xl md:text-6xl font-extrabold mb-6 bg-gradient-to-r from-[#003d7a] to-blue-500 bg-clip-text text-transparent">
-                        Production Quality Management
+                        Gestion de la Qualité de Production
                     </h1>
                     <p className="text-xl text-slate-600 max-w-2xl mx-auto leading-relaxed">
-                        A state-of-the-art platform designed to streamline quality control, provide real-time insights, 
-                        and ensure manufacturing excellence at every stage of production.
+                        Une plateforme de pointe conçue pour optimiser le contrôle qualité, fournir des informations en temps réel 
+                        et garantir l'excellence de fabrication à chaque étape de la production.
                     </p>
                     <div className="mt-10 flex justify-center gap-4">
                         <div className="flex items-center gap-2 px-4 py-2 bg-blue-50 border border-blue-100 rounded-full text-[#003d7a] text-sm font-medium">
-                            <Shield size={16} /> Production Ready
+                            <Shield size={16} /> Prêt pour la Production
                         </div>
                         <div className="flex items-center gap-2 px-4 py-2 bg-emerald-50 border border-emerald-100 rounded-full text-emerald-700 text-sm font-medium">
-                            <Zap size={16} /> High Performance
+                            <Zap size={16} /> Haute Performance
                         </div>
                     </div>
                 </section>
@@ -135,7 +135,7 @@ export default function DocsPage() {
                     <div className="lg:col-span-2 space-y-12">
                         <div>
                             <h2 className="text-3xl font-bold mb-8 flex items-center gap-3">
-                                <Cpu className="text-blue-600" /> Technology Stack
+                                <Cpu className="text-blue-600" /> Stack Technologique
                             </h2>
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                                 {techStack.map((tech) => (
@@ -154,7 +154,7 @@ export default function DocsPage() {
                         {/* System Features Grid */}
                         <div>
                             <h2 className="text-3xl font-bold mb-8 flex items-center gap-3">
-                                <Zap className="text-orange-500" /> Key Capability Features
+                                <Zap className="text-orange-500" /> Fonctionnalités Clés
                             </h2>
                             <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
                                 {features.map((feature) => (
@@ -174,17 +174,17 @@ export default function DocsPage() {
                     <aside className="space-y-8">
                         <div className="p-8 rounded-3xl bg-[#003d7a] text-white shadow-xl relative overflow-hidden">
                             <div className="relative z-10">
-                                <h3 className="text-2xl font-bold mb-4">Platform Overview</h3>
+                                <h3 className="text-2xl font-bold mb-4">Aperçu de la Plateforme</h3>
                                 <p className="text-blue-100 text-sm mb-6 leading-relaxed">
-                                    Our platform integrates directly into the production workflow, providing operators and managers 
-                                    with the tools they need to maintain zero-defect standards.
+                                    Notre plateforme s'intègre directement dans le flux de production, offrant aux opérateurs et aux gestionnaires 
+                                    les outils nécessaires pour maintenir des standards de zéro défaut.
                                 </p>
                                 <ul className="space-y-4">
                                     {[
-                                        'Centralized Data Architecture',
-                                        'Real-time Dashboard Metrics',
-                                        'Automated PDF & XLSX Reports',
-                                        'Shift-based Access Control'
+                                        'Architecture de Données Centralisée',
+                                        'Métriques du Tableau de Bord en Temps Réel',
+                                        'Rapports PDF & XLSX Automatisés',
+                                        'Contrôle d\'Accès Basé sur les Shifts'
                                     ].map(item => (
                                         <li key={item} className="flex items-center gap-3 text-sm">
                                             <div className="w-1.5 h-1.5 bg-blue-300 rounded-full" />
@@ -199,7 +199,7 @@ export default function DocsPage() {
                         <div className="p-8 rounded-3xl bg-white border border-slate-200 shadow-sm">
                             <h3 className="font-bold mb-4 text-slate-800">Support & Excellence</h3>
                             <p className="text-sm text-slate-500 mb-6 font-medium">
-                                Dedicated to continuous improvement and technical superiority in industrial quality management.
+                                Dédié à l'amélioration continue et à la supériorité technique dans la gestion de la qualité industrielle.
                             </p>
                             <div className="pt-6 border-t border-slate-100">
                                 <div className="text-xs uppercase tracking-widest text-[#003d7a] font-bold mb-2">Version</div>
@@ -212,8 +212,8 @@ export default function DocsPage() {
                 {/* Footer Section */}
                 <footer className="mt-32 pt-12 border-t border-slate-200 text-center">
                     <p className="text-slate-400 text-sm">
-                        &copy; {new Date().getFullYear()} DRÄXLMAIER Group. All rights reserved. 
-                        Designed for Internal Quality Management Excellence.
+                        &copy; {new Date().getFullYear()} Groupe DRÄXLMAIER. Tous droits réservés. 
+                        Conçu pour l'excellence de la gestion de la qualité interne.
                     </p>
                 </footer>
             </main>
