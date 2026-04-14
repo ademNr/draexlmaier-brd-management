@@ -129,6 +129,21 @@ const DraexlmaierApp = () => {
             (window as any).storage = storage;
         }
 
+        const loadAuth = async () => {
+            try {
+                const auth = await storage.get('draexlmaier_auth', true);
+                if (auth && auth.value) {
+                    const authData = JSON.parse(auth.value);
+                    if (authData.isLoggedIn) {
+                        setIsLoggedIn(true);
+                        setUsername(authData.username);
+                        setShift(authData.shift);
+                        setCurrentPage('control');
+                    }
+                }
+            } catch (e) { console.log('No auth session found'); }
+        }
+
         const loadSettings = async () => {
             try {
                 const lang = await storage.get('draexlmaier_language');
@@ -205,6 +220,7 @@ const DraexlmaierApp = () => {
             }
         };
 
+        loadAuth();
         loadSettings();
         loadImage();
         loadDashboardImages();
@@ -232,11 +248,22 @@ const DraexlmaierApp = () => {
         }
     };
 
-    const handleLogin = () => {
+    const handleLogin = async () => {
         if (username.trim() && password === 'drax123' && shift) {
             setIsLoggedIn(true);
             setCurrentPage('control');
             setLoginError('');
+            
+            // Persist login state
+            try {
+                await storage.set('draexlmaier_auth', JSON.stringify({
+                    isLoggedIn: true,
+                    username,
+                    shift
+                }), true);
+            } catch (e) {
+                console.error('Failed to save auth state', e);
+            }
         } else if (!username.trim()) {
             setLoginError(t.login.errors.enterName);
         } else if (!shift) {
@@ -246,12 +273,17 @@ const DraexlmaierApp = () => {
         }
     };
 
-    const handleLogout = () => {
+    const handleLogout = async () => {
         setIsLoggedIn(false);
         setCurrentPage('login');
         setUsername('');
         setPassword('');
         setShift('');
+        try {
+            await storage.delete('draexlmaier_auth');
+        } catch (e) {
+            console.error('Failed to clear auth state', e);
+        }
     };
 
     const toggleDefaut = (partier: string, defaut: string) => {
@@ -364,6 +396,15 @@ const DraexlmaierApp = () => {
                 if (res.ok) {
                     setControlData([]);
                     alert(t.settings.historyDeleted);
+                    // Refresh data from server to ensure sync
+                    const loadControls = async () => {
+                        try {
+                            const res = await fetch('/api/controls');
+                            const data = await res.json();
+                            if (Array.isArray(data)) setControlData(data);
+                        } catch (error) { console.error('Error refreshing controls:', error); }
+                    };
+                    loadControls();
                 } else {
                     console.error('Failed to delete history');
                 }
@@ -725,11 +766,12 @@ const DraexlmaierApp = () => {
                             </span>
                         </div>
                         <button
-                            className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+                            className="flex items-center gap-2 px-3 py-1.5 text-red-600 hover:bg-red-50 rounded-lg transition-all font-semibold border border-transparent hover:border-red-200"
                             onClick={handleLogout}
                             title={t.header.logout}
                         >
                             <LogOut size={18} />
+                            <span className="text-sm hidden sm:inline">{t.header.logout}</span>
                         </button>
                     </div>
                 </div>
